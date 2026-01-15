@@ -5,7 +5,7 @@ const session = require("express-session");
 const multer = require("multer");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 /* =====================
    MIDDLEWARE
@@ -23,7 +23,6 @@ app.use(
 
 app.use("/audios", express.static("audios"));
 app.use("/public", express.static("public"));
-
 
 /* =====================
    ADMIN CREDENTIALS
