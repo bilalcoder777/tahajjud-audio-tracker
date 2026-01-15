@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/public/style.css">
+
+  
+
+</head>
+<body>
+   <div class="container">
+
+
+
+   
+<h2>Admin Dashboard</h2>
+<div class="divider"></div>
+<div class="nav">
+  <a href="/">Listener</a>
+  <a href="/admin/history">History</a>
+</div>
+
+
+
+<hr>
+
+
+
+<h3>Today's Listeners</h3>
+<h3>Upload New Audio</h3>
+
+<form action="/admin/upload-audio" method="POST" enctype="multipart/form-data">
+  <input type="file" name="audio" accept="audio/*" required />
+  <br><br>
+  <button type="submit">Upload & Start New Session</button>
+</form>
+
+<hr>
+
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Listened</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="listenerTable">
+    <tr>
+      <td colspan="3">Loading...</td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  function secondsToTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+  }
+
+  fetch("/admin/today-listeners")
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById("listenerTable");
+      table.innerHTML = "";
+
+      if (data.length === 0) {
+        table.innerHTML = "<tr><td colspan='3'>No listeners yet</td></tr>";
+        return;
+      }
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${row.name}</td>
+          <td>${secondsToTime(row.seconds)} / ${secondsToTime(row.duration)}</td>
+          <td>${row.status}</td>
+        `;
+
+        table.appendChild(tr);
+      });
+    });
+</script>
+</div>
+
+</body>
+</html>

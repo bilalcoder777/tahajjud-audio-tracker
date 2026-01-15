@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio History</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="nav">
+      <a href="/">Listener</a>
+      <a href="/admin/login">Admin</a>
+    </div>
+
+    <h1>Previous Audios</h1>
+    <div class="divider"></div>
+
+    <ul id="historyList"></ul>
+
+    <audio id="player" controls></audio>
+
+    <script>
+      fetch("/history/audios")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("historyList");
+
+          data.forEach(a => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <button onclick="play(${a.id})">
+                ${a.filename}
+              </button>
+            `;
+            list.appendChild(li);
+          });
+        });
+
+      function play(id) {
+        document.getElementById("player").src = "/history/audio/" + id;
+      }
+    </script>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tahajjud Audio</title>
+  
+  <link rel="stylesheet" href="/public/style.css">
+
+
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+  <a href="/history">History</a>
+  <a href="/admin/login">Admin</a>
+  </div>
+
+  
+
+<h1>Allahu Allah</h1>
+<div class="divider"></div>
+
+
+<p>Please enter your name to listen to today’s reminder.</p>
+
+<input type="text" id="nameInput" placeholder="Enter your name" />
+<br><br>
+
+<button onclick="submitName()">Continue</button>
+
+<p id="message"></p>
+
+<audio id="audioPlayer" controls style="display:none;"
+       onplay="startTracking()"
+       onpause="stopTracking()"
+       onended="stopTracking()">
+  <source src="/current-audio" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+<p id="myStatus"></p>
+
+<script>
+  /* ========= SUBMIT NAME ========= */
+  function submitName() {
+    const name = document.getElementById("nameInput").value;
+
+    if (name.trim() === "") {
+      document.getElementById("message").innerText = "Name is required to continue.";
+      return;
+    }
+
+    fetch("/submit-name", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("message").innerText = data.message;
+      if (data.success) {
+        document.getElementById("audioPlayer").style.display = "block";
+      }
+    });
+  }
+
+  /* ========= VARIABLES ========= */
+  let listenedSeconds = 0;
+  let listenInterval = null;
+  let totalDuration = 0;
+
+  const audioElement = document.getElementById("audioPlayer");
+
+  audioElement.onloadedmetadata = function () {
+    totalDuration = Math.floor(audioElement.duration);
+  };
+
+  /* ========= TRACKING ========= */
+  function startTracking() {
+    listenInterval = setInterval(() => {
+      if (!audioElement.paused && !audioElement.ended) {
+        listenedSeconds++;
+        sendProgress();
+        updateMyStatus();
+      }
+    }, 1000);
+  }
+
+  function stopTracking() {
+    clearInterval(listenInterval);
+  }
+
+  /* ========= SEND PROGRESS ========= */
+  function sendProgress() {
+    let percentage = 0;
+    let status = "PARTIAL";
+
+    if (totalDuration > 0) {
+      percentage = (listenedSeconds / totalDuration) * 100;
+    }
+
+    if (percentage >= 95) {
+      status = "COMPLETED";
+    }
+
+    fetch("/listen-progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: document.getElementById("nameInput").value,
+        seconds: listenedSeconds,
+        duration: totalDuration,
+        percentage: Math.floor(percentage),
+        status
+      })
+    });
+  }
+
+  /* ========= SHOW MY STATUS ========= */
+  function updateMyStatus() {
+    const name = document.getElementById("nameInput").value;
+    if (!name) return;
+
+    fetch(`/listener/me?name=${encodeURIComponent(name)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data) return;
+
+        const m1 = Math.floor(data.seconds / 60);
+        const s1 = data.seconds % 60;
+        const m2 = Math.floor(data.duration / 60);
+        const s2 = data.duration % 60;
+
+        document.getElementById("myStatus").innerText =
+          `You listened ${m1.toString().padStart(2,"0")}:${s1.toString().padStart(2,"0")} / ` +
+          `${m2.toString().padStart(2,"0")}:${s2.toString().padStart(2,"0")} ` +
+          `(${data.status})`;
+      });
+  }
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin History</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="nav">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/">Listener</a>
+    </div>
+
+    <h1>Audio History (Admin)</h1>
+    <div class="divider"></div>
+
+    <ul id="audioList"></ul>
+
+    <h3>Listeners</h3>
+
+    <table border="1" cellpadding="6">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Listened</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="listenerTable">
+        <tr><td colspan="3">Select an audio</td></tr>
+      </tbody>
+    </table>
+
+    <script>
+      function format(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return m.toString().padStart(2,"0") + ":" + s.toString().padStart(2,"0");
+      }
+
+      fetch("/history/audios")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("audioList");
+          data.forEach(a => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="#" onclick="loadListeners(${a.id})">
+                ${a.filename} (${a.created_at})
+              </a>
+            `;
+            list.appendChild(li);
+          });
+        });
+
+      function loadListeners(audioId) {
+        fetch("/admin/history/" + audioId)
+          .then(res => res.json())
+          .then(data => {
+            const table = document.getElementById("listenerTable");
+            table.innerHTML = "";
+
+            if (data.length === 0) {
+              table.innerHTML = "<tr><td colspan='3'>No listeners</td></tr>";
+              return;
+            }
+
+            data.forEach(r => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${r.name}</td>
+                <td>${format(r.seconds)} / ${format(r.duration)}</td>
+                <td>${r.status}</td>
+              `;
+              table.appendChild(tr);
+            });
+          });
+      }
+    </script>
+
+  </div>
+</body>
+</html>
